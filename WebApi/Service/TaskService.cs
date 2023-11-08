@@ -41,7 +41,7 @@ namespace WebApi
                 throw new ArgumentNullException(nameof(task));
             }
 
-            var sql = @"INSERT INTO Task (taskId, task_name, listId) VALUES (@id, @name, @listId)";
+            var sql = @"INSERT INTO Task (taskId, task_name, listId, completed) VALUES (@id, @name, @listId, @completed)";
 
             using (var connection = DBConnection.CreateConnection())
             {
@@ -52,15 +52,45 @@ namespace WebApi
                     command.Parameters.AddWithValue("@id", task.taskId);
                     command.Parameters.AddWithValue("@name", task.tasks);
                     command.Parameters.AddWithValue("@listId", task.listId);
+                    command.Parameters.AddWithValue("@completed", task.completed);
                     command.ExecuteNonQuery();
                 }
             }
         }
 
+        public static TaskItem? GetTask(string taskId)
+        {
+            var sql = "SELECT * FROM Task WHERE taskId = @taskId";
+            TaskItem? task = null;
+
+            using (var connection = DBConnection.CreateConnection())
+            {
+                connection.Open();
+
+                using (var command = new MySqlCommand(sql, connection))
+                {
+                    command.Parameters.AddWithValue("@taskId", taskId);
+                    var reader = command.ExecuteReader();
+
+                    if (reader.Read())
+                    {
+                        task = new TaskItem
+                        {
+                            taskId = reader["taskId"] as string,
+                            tasks = reader["task_name"] as string,
+                            completed = Convert.ToBoolean(reader["completed"]),
+                            listId = reader["listId"] as string
+                        };
+                    }
+                }
+            }
+            return task;
+        }
+
 
         public static void UpdateTask(TaskItem taskItem)
         {
-            var sql = @"UPDATE Task SET task_name = @name WHERE taskId = @id AND listId = @listId";
+            var sql = @"UPDATE Task SET task_name = @name, completed = @completed WHERE taskId = @id AND listId = @listId";
 
             using (var connection = DBConnection.CreateConnection())
 
@@ -72,6 +102,7 @@ namespace WebApi
                     command.Parameters.AddWithValue("@name", taskItem.tasks);
                     command.Parameters.AddWithValue("@id", taskItem.taskId);
                     command.Parameters.AddWithValue("@listId", taskItem.listId);
+                    command.Parameters.AddWithValue("@completed", taskItem.completed);
                     command.ExecuteNonQuery();
                 }
             }

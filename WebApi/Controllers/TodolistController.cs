@@ -115,5 +115,21 @@ namespace WebApi.Controllers
 
             return NoContent();
         }
+
+        [HttpPut("taskUpdateCompleted/{id}")]
+        public IActionResult UpdateTaskCompleted(string id, bool completed)
+        {
+            var task = TaskService.GetTask(id);
+            if (task == null)
+            {
+                return NotFound();
+            }
+
+            task.completed = completed;
+
+            TaskService.UpdateTask(task);
+
+            return NoContent();
+        }
     }
 }
